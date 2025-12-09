@@ -1,4 +1,4 @@
-﻿#include <GL/glew.h>
+#include <GL/glew.h>
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics/Image.hpp>
@@ -407,15 +407,7 @@ const char* fragmentShaderSrc = R"(
 // ПЛАНЕТЫ
 // =======================================================
 
-struct Planet
-{
-    float orbitRadius;    // радиус орбиты
-    float orbitSpeed;     // скорость по орбите (рад/сек)
-    float selfSpeed;      // скорость вращения вокруг своей оси
-    float scale;          // масштаб модели
-    float orbitAngle = 0; // текущий угол на орбите
-    float selfAngle = 0;  // текущий угол собственного вращения
-};
+
 
 int main()
 {
@@ -495,19 +487,53 @@ int main()
     auto makeProjection = [&](unsigned w, unsigned h)
         {
             float aspect = (h == 0) ? 1.0f : (float)w / (float)h;
-            return Mat4::Perspective(deg2rad(60.0f), aspect, 0.1f, 100.0f);
+            return Mat4::Perspective(deg2rad(60.0f), aspect, 0.1f, 1000.0f);
         };
 
     Mat4 proj = makeProjection(window.getSize().x, window.getSize().y);
 
+    struct Planet
+    {
+        float orbitRadius;    // радиус орбиты
+        float orbitSpeed;     // скорость по орбите (рад/сек)
+        float selfSpeed;      // скорость вращения вокруг своей оси
+        float scale;          // масштаб модели
+        float orbitAngle = 0; // текущий угол на орбите
+        float selfAngle = 0;  // текущий угол собственного вращения
+    };
+
     // --- планеты (0-я — "Солнце") ---
+    srand(static_cast<unsigned>(time(nullptr)));
+    auto frand = [](float a, float b)
+        {
+            return a + (b - a) * (rand() / (float)RAND_MAX);
+        };
+    int planetCount = 100;
     std::vector<Planet> planets;
-    planets.push_back({ 0.0f, 0.0f, 0.6f, 2.0f });   // Солнце — в центре, большое
-    planets.push_back({ 4.0f, 0.6f, 1.0f, 0.8f });   // планеты поменьше
-    planets.push_back({ 6.0f, 0.4f, 0.7f, 1.0f });
+    planets.push_back({ 0.0f, 0.0f, 0.2f, 4.0f });   // Солнце — в центре, большое
+
+    for (int i = 0; i < planetCount; i++) {
+        float orbitRadius = i/2 + 4.0f;
+        float orbitSpeed = frand(0.5f, 1.5f) / orbitRadius;
+        float selfSpeed = frand(0.3f, 1.5f); 
+        float scale = frand(0.4f, 1.5f);
+        float orbitAngle = frand(0.0f, 360.0f);
+        float selfAngle = frand(0.0f, 360.0f);
+
+        planets.push_back({
+            orbitRadius,
+            orbitSpeed,
+            selfSpeed,
+            scale,
+            orbitAngle,
+            selfAngle
+            });
+    }
+    
+    /*planets.push_back({ 6.0f, 0.4f, 0.7f, 1.0f });
     planets.push_back({ 8.0f, 0.3f, 1.3f, 1.2f });
     planets.push_back({ 10.0f, 0.2f, 0.9f, 0.9f });
-    planets.push_back({ 12.0f, 0.15f, 0.5f, 1.4f });
+    planets.push_back({ 12.0f, 0.15f, 0.5f, 1.4f });*/
 
     // --- время ---
     sf::Clock clock;
